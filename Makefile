@@ -11,3 +11,6 @@ build:
 	./build.sh
 render-start:
 	gunicorn -w 5 -b 0.0.0.0:$(PORT) page_analyzer:app
+migrate:
+	export DATABASE_URL=postgresql://sasha:12345@localhost:5432/p3
+	psql $$DATABASE_URL -f database.sql
