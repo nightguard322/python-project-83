@@ -28,7 +28,7 @@ def handle_errors(f):
         try:
             return f(*args, **kwargs)
         except psycopg2.Error as e:
-            return 'Database error', 500
+            return f'Database error, - {e}', 500
     return wrapper
 
 
