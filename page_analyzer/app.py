@@ -48,6 +48,7 @@ def urls_index():
     with conn.cursor(cursor_factory=DictCursor) as c:
         c.execute('SELECT * FROM urls ORDER BY id DESC')
         urls = c.fetchall()
+        conn.commit()
     return render_template(
         '/urls/index.html',
         urls=urls
@@ -75,8 +76,8 @@ def urls_store():
             hostname = f"{parsed.scheme}://{parsed.hostname}"
             c.execute('INSERT INTO urls (name) VALUES (%s) RETURNING id;', (hostname, ))
             id = c.fetchone()[0]
-            conn.commit()
             flash('Страница успешно добавлена', 'success')
+        conn.commit()
     return redirect(url_for('urls_show', id=id))
 
 
@@ -88,6 +89,7 @@ def urls_show(id):
         url = c.fetchone()
     if not url:
         return 'Url not found', 404
+    conn.commit()
     return render_template(
         '/urls/show.html',
         url=url
