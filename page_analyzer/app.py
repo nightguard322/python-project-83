@@ -19,10 +19,13 @@ load_dotenv()
 app = Flask(__name__)
 app.config['SECRET_KEY']=os.getenv('SECRET_KEY')
 DATABASE_URL = os.getenv('DATABASE_URL')
-conn = psycopg2.connect(
-    DATABASE_URL,
-    sslmode="require")
 
+@app.before_request
+def check_db_connection():
+    if not conn or conn.closed:  # Render может закрывать неактивные соединения
+        conn = psycopg2.connect(
+            DATABASE_URL,
+            sslmode="require")
 
 def handle_errors(f):
     @wraps(f)
@@ -31,6 +34,8 @@ def handle_errors(f):
             return f(*args, **kwargs)
         except psycopg2.Error as e:
             return f'Database error, - {e}', 500
+        except Exception as e:
+            return f'Common error - {e}', 500
     return wrapper
 
 
