@@ -19,7 +19,9 @@ load_dotenv()
 app = Flask(__name__)
 app.config['SECRET_KEY']=os.getenv('SECRET_KEY')
 DATABASE_URL = os.getenv('DATABASE_URL')
-conn = psycopg2.connect(DATABASE_URL)
+conn = psycopg2.connect(
+    DATABASE_URL,
+    sslmode="require")
 
 
 def handle_errors(f):
@@ -73,8 +75,8 @@ def urls_store():
             flash('Страница уже существует', 'warning')
         else:
             parsed = urlparse(url_name)
-            hostname = f"{parsed.scheme}://{parsed.hostname}"
-            c.execute('INSERT INTO urls (name) VALUES (%s) RETURNING id;', (hostname, ))
+            c.execute('INSERT INTO urls (name) VALUES (%s) RETURNING id;',
+                (f"{parsed.scheme}://{parsed.hostname}", ))
             id = c.fetchone()[0]
             flash('Страница успешно добавлена', 'success')
         conn.commit()
