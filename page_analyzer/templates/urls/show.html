@@ -17,4 +17,33 @@
             </tr>
         </tbody>
     </table>
+
+    <h2>Проверки</h2>
+    <form action="{{ url_for('urls_check', id=url['id'])}}" method="post">
+        <input type="submit" value="Запустить проверку" class="btn btn-primary btn-lg ms-3 px-5">
+    </form>
+    <table class="table table-bordered table-hover text-nowrap" data-test="urls">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Код ответа</th>
+                <th>h1</th>
+                <th>title</th>
+                <th>description</th>
+                <th>Дата создания</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for check in checks %} 
+            <tr>
+                <td>{{ check['id'] }}</td>
+                <td>test</td>
+                <td>test</td>
+                <td>test</td>
+                <td>test</td>
+                <td>{{ check['created_at'] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 {% endblock %}

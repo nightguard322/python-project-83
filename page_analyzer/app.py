@@ -5,7 +5,8 @@ from flask import (
     flash,
     get_flashed_messages,
     redirect,
-    url_for
+    url_for,
+    g
 )
 from dotenv import load_dotenv
 import os
@@ -19,14 +20,12 @@ load_dotenv()
 app = Flask(__name__)
 app.config['SECRET_KEY']=os.getenv('SECRET_KEY')
 DATABASE_URL = os.getenv('DATABASE_URL')
-conn = None
 
 @app.before_request
 def check_db_connection():
-    if not conn or conn.closed:  # Render может закрывать неактивные соединения
-        conn = psycopg2.connect(
-            DATABASE_URL,
-            sslmode="require")
+    g.conn = psycopg2.connect(
+        DATABASE_URL,
+        sslmode="require")
 
 def handle_errors(f):
     @wraps(f)
@@ -53,10 +52,10 @@ def index():
 @app.route('/urls')
 @handle_errors
 def urls_index():
-    with conn.cursor(cursor_factory=DictCursor) as c:
+    with g.conn.cursor(cursor_factory=DictCursor) as c:
         c.execute('SELECT * FROM urls ORDER BY id DESC')
         urls = c.fetchall()
-        conn.commit()
+        g.conn.commit()
     return render_template(
         '/urls/index.html',
         urls=urls
@@ -73,7 +72,7 @@ def urls_store():
             'index.html',
             url_name=url_name
     )
-    with conn.cursor(cursor_factory=DictCursor) as c:
+    with g.conn.cursor(cursor_factory=DictCursor) as c:
         c.execute('SELECT * FROM urls WHERE name = %s', (url_name, ))
         existing_url = c.fetchone()
         if existing_url:
@@ -85,20 +84,32 @@ def urls_store():
                 (f"{parsed.scheme}://{parsed.hostname}", ))
             id = c.fetchone()[0]
             flash('Страница успешно добавлена', 'success')
-        conn.commit()
+        g.conn.commit()
     return redirect(url_for('urls_show', id=id))
 
 
 @app.route('/urls/<int:id>')
 @handle_errors
 def urls_show(id):
-    with conn.cursor(cursor_factory=DictCursor) as c:
-        c.execute('SELECT * FROM urls WHERE id = %s', (id, ))
+    with g.conn.cursor(cursor_factory=DictCursor) as c:
+        c.execute(
+            'SELECT * FROM urls WHERE urls.id = %s', (id, ))
         url = c.fetchone()
-    if not url:
-        return 'Url not found', 404
-    conn.commit()
+        if not url:
+            return 'Url not found', 404
+        c.execute('SELECT * FROM url_checks WHERE url_id = %s', (id, ))
+        checks = c.fetchall()
+    g.conn.commit()
     return render_template(
         '/urls/show.html',
-        url=url
+        url=url,
+        checks=checks
     )
+
+@app.post('/urls/<int:id>/checks')
+@handle_errors
+def urls_check(id):
+    with g.conn.cursor() as c:
+        c.execute('INSERT INTO url_checks (url_id) VALUES (%s)', (id, ))
+    g.conn.commit()
+    return redirect(url_for('urls_show', id=id))
