@@ -20,9 +20,9 @@
 
     <h2>Проверки</h2>
     <form action="{{ url_for('urls_check', id=url['id'])}}" method="post">
-        <input type="submit" value="Запустить проверку" class="btn btn-primary btn-lg ms-3 px-5">
+        <input type="submit" value="Запустить проверку" class="btn btn-primary">
     </form>
-    <table class="table table-bordered table-hover text-nowrap" data-test="urls">
+    <table class="table table-bordered table-hover text-nowrap mt-2" data-test="urls">
         <thead>
             <tr>
                 <th>ID</th>
@@ -37,7 +37,7 @@
             {% for check in checks %} 
             <tr>
                 <td>{{ check['id'] }}</td>
-                <td>test</td>
+                <td>{{ check['status_code'] }}</td>
                 <td>test</td>
                 <td>test</td>
                 <td>test</td>

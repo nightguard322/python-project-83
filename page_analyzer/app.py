@@ -15,6 +15,7 @@ from psycopg2.extras import DictCursor
 from functools import wraps
 import validators
 from urllib.parse import urlparse
+import requests
 
 load_dotenv()
 app = Flask(__name__)
@@ -53,7 +54,16 @@ def index():
 @handle_errors
 def urls_index():
     with g.conn.cursor(cursor_factory=DictCursor) as c:
-        c.execute('SELECT * FROM urls ORDER BY id DESC')
+        c.execute(
+            'SELECT \
+                urls.id as url_id,\
+                urls.name as url_name\
+                url_checks.created_at as last_check\
+                urls_check.status_code as status.code\
+            FROM urls \
+            LEFT JOIN url_checks \
+            ON urls.id = url_checks.url_id\
+        \ ORDER BY id DESC')
         urls = c.fetchall()
         g.conn.commit()
     return render_template(
@@ -109,7 +119,10 @@ def urls_show(id):
 @app.post('/urls/<int:id>/checks')
 @handle_errors
 def urls_check(id):
-    with g.conn.cursor() as c:
-        c.execute('INSERT INTO url_checks (url_id) VALUES (%s)', (id, ))
+    with g.conn.cursor(cursor_factory=DictCursor) as c:
+        c.execute('SELECT * FROM urls WHERE urls.id = %s', (id, ))
+        requested_url = c.fetchone()
+        response = requests.get(requested_url['name'])
+        c.execute('INSERT INTO url_checks (url_id, status_code) VALUES (%s, %s)', (id, response.status_code))
     g.conn.commit()
     return redirect(url_for('urls_show', id=id))
