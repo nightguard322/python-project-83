@@ -27,8 +27,8 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 @app.before_request
 def check_db_connection():
     g.conn = psycopg2.connect(
-        DATABASE_URL,
-        sslmode="require")
+        DATABASE_URL)
+        # ,sslmode="require")
 
 def handle_errors(f):
     @wraps(f)
