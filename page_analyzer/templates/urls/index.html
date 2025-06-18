@@ -11,12 +11,12 @@
             </tr>
         </thead>
         <tbody>
-            {% for row in urls %} 
+            {% for url in urls %} 
             <tr>
-                <td>{{ row['id'] }}</td>
-                <td><a href="{{ url_for('urls_show', id=row['id']) }}">{{ row['name'] }}</a></td>
-                <td>test</td>
-                <td>test</td>
+                <td>{{ url['url_id'] }}</td>
+                <td><a href="{{ url_for('urls_show', id=url['url_id']) }}">{{ url['url_name'] }}</a></td>
+                <td>{{ url['check_date'] }}</td>
+                <td>{{ url['status_code'] }}</td>
             </tr>
             {% endfor %}
         </tbody>

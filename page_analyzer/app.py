@@ -16,6 +16,11 @@ from functools import wraps
 import validators
 from urllib.parse import urlparse
 import requests
+from requests.exceptions import (
+    RequestException,
+    HTTPError,
+    ConnectionError,
+    Timeout)
 
 load_dotenv()
 app = Flask(__name__)
@@ -55,15 +60,15 @@ def index():
 def urls_index():
     with g.conn.cursor(cursor_factory=DictCursor) as c:
         c.execute(
-            'SELECT \
+            'SELECT DISTINCT ON (urls.id)\
                 urls.id as url_id,\
-                urls.name as url_name\
-                url_checks.created_at as last_check\
-                urls_check.status_code as status.code\
+                urls.name as url_name,\
+                url_checks.created_at as check_date,\
+                url_checks.status_code as status_code\
             FROM urls \
             LEFT JOIN url_checks \
             ON urls.id = url_checks.url_id\
-        \ ORDER BY id DESC')
+            ORDER BY urls.id, url_checks.created_at DESC')
         urls = c.fetchall()
         g.conn.commit()
     return render_template(
@@ -122,7 +127,12 @@ def urls_check(id):
     with g.conn.cursor(cursor_factory=DictCursor) as c:
         c.execute('SELECT * FROM urls WHERE urls.id = %s', (id, ))
         requested_url = c.fetchone()
-        response = requests.get(requested_url['name'])
-        c.execute('INSERT INTO url_checks (url_id, status_code) VALUES (%s, %s)', (id, response.status_code))
+        try:
+            response = requests.get(requested_url['name'])
+            response.raise_for_status()
+            c.execute('INSERT INTO url_checks (url_id, status_code) VALUES (%s, %s)', (id, response.status_code))
+        except HTTPError as e:
+            print(f'Ошибка сервера: {e.response.status_code}')
+            flash(f'Произошла ошибка при проверке', 'error')
     g.conn.commit()
     return redirect(url_for('urls_show', id=id))
