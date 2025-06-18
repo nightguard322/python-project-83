@@ -83,7 +83,7 @@ def urls_store():
         return render_template(
             'index.html',
             url_name=url_name
-    )
+    ), 422
     with g.conn.cursor(cursor_factory=DictCursor) as c:
         c.execute('SELECT * FROM urls WHERE name = %s', (url_name, ))
         existing_url = c.fetchone()
