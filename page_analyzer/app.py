@@ -16,11 +16,8 @@ from functools import wraps
 import validators
 from urllib.parse import urlparse
 import requests
-from requests.exceptions import (
-    RequestException,
-    HTTPError,
-    ConnectionError,
-    Timeout)
+from requests.exceptions import HTTPError
+from bs4 import BeautifulSoup
 
 load_dotenv()
 app = Flask(__name__)
@@ -130,9 +127,30 @@ def urls_check(id):
         try:
             response = requests.get(requested_url['name'])
             response.raise_for_status()
-            c.execute('INSERT INTO url_checks (url_id, status_code) VALUES (%s, %s)', (id, response.status_code))
+            soup = BeautifulSoup(response.text, 'html.parser')
+            c.execute(
+                'INSERT INTO url_checks (url_id, h1, title, description, status_code) \
+                VALUES (%(id)s, %(h1)s, %(title)s, %(description)s, %(status_code)s);', 
+                {
+                    'id': id,
+                    'h1': get_tag_text('h1', soup),
+                    'title': get_tag_text('title', soup),
+                    'description': get_tag_attrs('meta', 'content', soup),
+                    'status_code': response.status_code
+                }
+            )
         except HTTPError as e:
             print(f'Ошибка сервера: {e.response.status_code}')
-            flash(f'Произошла ошибка при проверке', 'error')
+            flash('Произошла ошибка при проверке', 'error')
     g.conn.commit()
     return redirect(url_for('urls_show', id=id))
+
+
+def get_tag_text(tag_name: str, soup: BeautifulSoup):
+    tag = soup.find(tag_name)
+    return tag.text.strip() if tag else None
+
+
+def get_tag_attrs(tag_name: str, tag_attr: str, soup: BeautifulSoup):
+    tag = soup.find(tag_name, attrs={'name': 'description'})
+    return tag.get(tag_attr).strip() if tag else None

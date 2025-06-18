@@ -22,7 +22,8 @@
     <form action="{{ url_for('urls_check', id=url['id'])}}" method="post">
         <input type="submit" value="Запустить проверку" class="btn btn-primary">
     </form>
-    <table class="table table-bordered table-hover text-nowrap mt-2" data-test="urls">
+    <div>
+        <table class="table table-responsive table-bordered table-hover mt-2" data-test="checks">
         <thead>
             <tr>
                 <th>ID</th>
@@ -36,14 +37,16 @@
         <tbody>
             {% for check in checks %} 
             <tr>
-                <td>{{ check['id'] }}</td>
-                <td>{{ check['status_code'] }}</td>
-                <td>test</td>
-                <td>test</td>
-                <td>test</td>
-                <td>{{ check['created_at'] }}</td>
+                <td>{{ check.get('id') }}</td>
+                <td>{{ check.get('status_code') }}</td>
+                <td>{{ check.get('h1') or '' }}</td>
+                <td>{{ check.get('title') or '' }}</td>
+                <td>{{ check.get('description') or '' }}</td>
+                <td>{{ check.get('created_at') }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+    </div>
+    
 {% endblock %}

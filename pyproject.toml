@@ -5,16 +5,17 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "bs4>=0.0.2",
     "cryptography>=45.0.4",
     "dotenv>=0.9.9",
     "flask>=3.1.1",
     "psycopg2-binary>=2.9.10",
     "requests>=2.32.4",
     "validators>=0.35.0",
+    "gunicorn>=23.0.0"
 ]
 
 [dependency-groups]
 dev = [
-    "gunicorn>=23.0.0",
     "ruff>=0.11.13",
 ]
