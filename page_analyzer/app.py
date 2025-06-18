@@ -21,14 +21,15 @@ from bs4 import BeautifulSoup
 
 load_dotenv()
 app = Flask(__name__)
-app.config['SECRET_KEY']=os.getenv('SECRET_KEY')
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 DATABASE_URL = os.getenv('DATABASE_URL')
+
 
 @app.before_request
 def check_db_connection():
     g.conn = psycopg2.connect(
         DATABASE_URL)
-        # ,sslmode="require")
+
 
 def handle_errors(f):
     @wraps(f)
@@ -119,6 +120,7 @@ def urls_show(id):
         checks=checks
     )
 
+
 @app.post('/urls/<int:id>/checks')
 @handle_errors
 def urls_check(id):
@@ -129,17 +131,27 @@ def urls_check(id):
             response = requests.get(requested_url['name'])
             response.raise_for_status()
             soup = BeautifulSoup(response.text, 'html.parser')
-            c.execute(
-                'INSERT INTO url_checks (url_id, h1, title, description, status_code) \
-                VALUES (%(id)s, %(h1)s, %(title)s, %(description)s, %(status_code)s);', 
-                {
+            query = '''INSERT INTO url_checks (
+                url_id, 
+                h1, 
+                title, 
+                description, 
+                status_code
+                ) VALUES (
+                    %(id)s,
+                    %(h1)s,
+                    %(title)s,
+                    %(description)s,
+                    %(status_code)s
+                )'''
+            params = {
                     'id': id,
                     'h1': get_tag_text('h1', soup),
                     'title': get_tag_text('title', soup),
                     'description': get_tag_attrs('meta', 'content', soup),
                     'status_code': response.status_code
                 }
-            )
+            c.execute(query, params)
             flash('Страница успешно проверена', 'success')
         except HTTPError as e:
             print(f'Ошибка сервера: {e.response.status_code}')
