@@ -84,16 +84,17 @@ def urls_store():
             'index.html',
             url_name=url_name
     ), 422
+    parsed = urlparse(url_name)
+    base_url = f"{parsed.scheme}://{parsed.hostname}"
     with g.conn.cursor(cursor_factory=DictCursor) as c:
-        c.execute('SELECT * FROM urls WHERE name = %s', (url_name, ))
+        c.execute('SELECT * FROM urls WHERE name = %s', (base_url, ))
         existing_url = c.fetchone()
         if existing_url:
             id = existing_url['id']
             flash('Страница уже существует', 'warning')
         else:
-            parsed = urlparse(url_name)
             c.execute('INSERT INTO urls (name) VALUES (%s) RETURNING id;',
-                (f"{parsed.scheme}://{parsed.hostname}", ))
+                (base_url, ))
             id = c.fetchone()[0]
             flash('Страница успешно добавлена', 'success')
         g.conn.commit()
