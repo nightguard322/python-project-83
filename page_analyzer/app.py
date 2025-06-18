@@ -140,6 +140,7 @@ def urls_check(id):
                     'status_code': response.status_code
                 }
             )
+            flash('Страница успешно проверена', 'success')
         except HTTPError as e:
             print(f'Ошибка сервера: {e.response.status_code}')
             flash('Произошла ошибка при проверке', 'error')
